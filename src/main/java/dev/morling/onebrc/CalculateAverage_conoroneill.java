@@ -38,21 +38,30 @@ public class CalculateAverage_conoroneill {
             int semi = line.indexOf(';');
             if (semi == -1) throw new RuntimeException("No semicolon found");
 //            return new Measurement(line.substring(0, semi), parseBoth(line.substring(semi + 1)));
-            return new Measurement(line.substring(0, semi), parseSimple(line.substring(semi + 1)));
+//            return new Measurement(line.substring(0, semi), parseSimple(line.substring(semi + 1)));
+            char[] chars = new char[6];
+            line.getChars(semi + 1, line.length(), chars, 0);
+            return new Measurement(line.substring(0, semi), parseChars(chars));
 //            return new Measurement(line.substring(0, semi), parseBytes(line.getBytes(), semi + 1));
 //            return new Measurement(line.substring(0, semi - 1), Double.parseDouble(line.substring(semi + 1)));
         }
     }
 
-    private static double parseBoth(String s) {
-        double quick = parseSimple(s);
+    private static int parseBoth(String s) {
+        int quick = parseSimple(s);
         double slow = Double.parseDouble(s);
-        if (quick != slow) {
+        if (quick/10.0 != slow) {
             throw new RuntimeException(STR."Parsing; string is: \"\{s}\"; quick: \{quick}; slow: \{slow}");
         }
         double fromBytes = parseBytes(s.getBytes(), 0);
         if (fromBytes != slow) {
             throw new RuntimeException(STR."Parsing; string is: \"\{s}\"; fromBytes: \{fromBytes}; slow: \{slow}");
+        }
+        char[] chars = new char[6];
+        s.getChars(0, s.length(), chars, 0);
+        int fromChars = parseChars(chars);
+        if (fromChars != quick) {
+            throw new RuntimeException(STR."Parsing; string is: \"\{s}\"; fromChars: \{fromChars}; quick: \{quick}");
         }
         return quick;
     }
@@ -118,6 +127,41 @@ public class CalculateAverage_conoroneill {
             }
             else {
                 char charFraction = s.charAt(3);
+                // nn.f
+                return (char1 - '0') * 100 + (char2 - '0') * 10 + (charFraction - '0');
+            }
+        }
+    }
+
+    private static int parseChars(char[] chars) {
+        char char1 = chars[0];
+        if (char1 == '-') {
+            char1 = chars[1];
+            char char2 = chars[2];
+            if (char2 == '.') {
+                char charFraction = chars[3];
+                // -n.f
+                // return -((char1 - '0')*10) - ((charFraction - '0'));
+                // - (x - '0') === ('0' - x)
+                return ('0' - char1) * 10 + ('0' - charFraction);
+            }
+            else {
+                char charFraction = chars[4];
+                // -nn.f
+                // return (-((char1 - '0') * 10 + (char2 - '0')))*10 - ((charFraction - '0'));
+                // - (x - '0') === ('0' - x)
+                return ('0' - char1) * 100 + ('0' - char2) * 10 + ('0' - charFraction);
+            }
+        }
+        else {
+            char char2 = chars[1];
+            if (char2 == '.') {
+                char charFraction = chars[2];
+                // n.f
+                return (char1 - '0') * 10 + (charFraction - '0');
+            }
+            else {
+                char charFraction = chars[3];
                 // nn.f
                 return (char1 - '0') * 100 + (char2 - '0') * 10 + (charFraction - '0');
             }
@@ -214,9 +258,9 @@ public class CalculateAverage_conoroneill {
 
         System.out.println(measurements);
 
-         long countValues = measurements.values().stream().mapToLong(x -> x.count).sum();
-         System.out.println(STR."Number of keys: \{measurements.size()}; values: \{countValues} (= \{countValues/1000000} million)");
-         System.out.println(STR."Elapsed: \{end - start} millis");
-         System.out.println(STR."Processors: \{getRuntime().availableProcessors()}");
+        // long countValues = measurements.values().stream().mapToLong(x -> x.count).sum();
+        // System.out.println(STR."Number of keys: \{measurements.size()}; values: \{countValues} (= \{countValues/1000000} million)");
+        // System.out.println(STR."Elapsed: \{end - start} millis");
+        // System.out.println(STR."Processors: \{getRuntime().availableProcessors()}");
     }
 }
